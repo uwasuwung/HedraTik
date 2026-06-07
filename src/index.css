@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-50: #f4f6fc;
+  --color-brand-100: #e8ecf8;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-900: #1e3a8a;
+  
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom styles for professional dashboard glassmorphism and lists */
+body {
+  font-family: var(--font-sans);
+  background-color: #05060b; /* Ultra dark cockpit space background */
+  color: #e2e8f0; /* slate-200 equivalent */
+}
+
+/* Custom glow element & premium card overrides default */
+.glow-card {
+  background: rgba(10, 12, 22, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+.glow-active {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Hide scrollbars but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "RT RW Net Manager",
+  "description": "Sistem Manajemen RT/RW Net canggih dengan tagihan otomatis, monitoring bandwidth, integrasi MikroTik, dan sistem cetak voucher.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
