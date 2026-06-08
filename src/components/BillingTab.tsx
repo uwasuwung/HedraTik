@@ -12,9 +12,11 @@ import {
   AlertTriangle,
   Calendar,
   Settings,
-  Share2
+  Share2,
+  FileDown
 } from "lucide-react";
 import { Invoice, SystemConfig } from "../types";
+import { exportSingleInvoice, exportBulkInvoices } from "../utils/pdfGenerator";
 
 interface BillingTabProps {
   invoices: Invoice[];
@@ -43,6 +45,41 @@ export default function BillingTab({
   // Local template state
   const [template, setTemplate] = useState(config?.template || "");
   const [isSaved, setIsSaved] = useState(false);
+
+  // Selection states for bulk PDF export
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
+
+  // Clear selection if the list of invoices changes
+  React.useEffect(() => {
+    setSelectedInvoiceIds([]);
+  }, [invoices]);
+
+  const handleToggleSelectAll = () => {
+    if (selectedInvoiceIds.length === invoices.length) {
+      setSelectedInvoiceIds([]);
+    } else {
+      setSelectedInvoiceIds(invoices.map(inv => inv.id));
+    }
+  };
+
+  const handleToggleSelectOne = (id: string) => {
+    setSelectedInvoiceIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedInvoiceIds([]);
+  };
+
+  const handleExportSelectedPDF = () => {
+    const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
+    exportBulkInvoices(selectedInvoices, "Selected");
+  };
+
+  const handleExportAllPDF = () => {
+    exportBulkInvoices(invoices, selectedMonth);
+  };
 
   // Sync state with props
   React.useEffect(() => {
@@ -168,19 +205,66 @@ export default function BillingTab({
 
       {/* Invoices List table */}
       <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl overflow-hidden shadow-xl">
-        <div className="p-4 bg-slate-950/80 border-b border-slate-850 flex items-center justify-between">
-          <h4 className="font-display font-semibold text-slate-200 text-xs uppercase tracking-wider">
-            Daftar Arus Tagihan Pelanggan (Invoices)
-          </h4>
-          <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800 font-mono">
-            {invoices.length} Total Invoices
-          </span>
+        <div className="p-4 bg-slate-950/80 border-b border-slate-850 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="font-display font-semibold text-slate-200 text-xs uppercase tracking-wider">
+              Daftar Arus Tagihan Pelanggan (Invoices)
+            </h4>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-800 font-mono">
+                {invoices.length} Total Invoices
+              </span>
+              {selectedInvoiceIds.length > 0 && (
+                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-mono font-bold animate-pulse">
+                  {selectedInvoiceIds.length} Terpilih
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {selectedInvoiceIds.length > 0 && (
+              <>
+                <button
+                  onClick={handleClearSelection}
+                  className="px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[10px] text-zinc-400 font-medium transition active:scale-95 cursor-pointer"
+                >
+                  Batal Pilih ({selectedInvoiceIds.length})
+                </button>
+                <button
+                  onClick={handleExportSelectedPDF}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium text-[10px] font-sans transition shadow shadow-sky-500/10 active:scale-95 cursor-pointer"
+                >
+                  <FileDown className="h-3 w-3" />
+                  Ekspor PDF Terpilih ({selectedInvoiceIds.length})
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={handleExportAllPDF}
+              disabled={invoices.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-255 font-medium text-[10px] font-sans transition disabled:opacity-45 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
+            >
+              <FileDown className="h-3 w-3 text-cyan-400" />
+              Ekspor Semua PDF ({invoices.length})
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-sans text-xs">
             <thead>
               <tr className="bg-slate-950/50 border-b border-slate-800 text-[11px] text-slate-400 uppercase font-semibold">
+                <th className="p-4 w-10 text-center">
+                  <input 
+                    type="checkbox" 
+                    checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
+                    onChange={handleToggleSelectAll}
+                    style={{ accentColor: "#2563eb" }}
+                    className="rounded border-slate-800 bg-slate-950 text-blue-600 focus:ring-0 focus:ring-offset-0 h-4 w-4 cursor-pointer"
+                  />
+                </th>
                 <th className="p-4">{t.invoiceNumber}</th>
                 <th className="p-4">Nama Pelanggan</th>
                 <th className="p-4">{t.billingMonth}</th>
@@ -194,7 +278,7 @@ export default function BillingTab({
             <tbody className="divide-y divide-slate-800/50">
               {invoices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500 italic">
+                  <td colSpan={9} className="p-8 text-center text-slate-500 italic">
                     Database tidak memiliki invoice tersimpan. Klik tombol untuk membangkitkan tagihan baru.
                   </td>
                 </tr>
@@ -207,8 +291,19 @@ export default function BillingTab({
                   let waBadge = "text-slate-400 bg-slate-950 border-slate-900";
                   if (invoice.waSentStatus === "sent") waBadge = "text-emerald-400 bg-emerald-950/40 border-emerald-900/40";
 
+                  const isChecked = selectedInvoiceIds.includes(invoice.id);
+
                   return (
-                    <tr key={invoice.id} className="hover:bg-slate-950/40 transition">
+                    <tr key={invoice.id} className={`hover:bg-slate-950/40 transition ${isChecked ? "bg-blue-500/5" : ""}`}>
+                      <td className="p-4 w-10 text-center">
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked}
+                          onChange={() => handleToggleSelectOne(invoice.id)}
+                          style={{ accentColor: "#2563eb" }}
+                          className="rounded border-slate-800 bg-slate-950 text-blue-600 focus:ring-0 focus:ring-offset-0 h-4 w-4 cursor-pointer"
+                        />
+                      </td>
                       {/* Invoice ID */}
                       <td className="p-4 font-mono font-bold text-slate-300">
                         {invoice.id.slice(0, 12).toUpperCase()}
@@ -254,8 +349,17 @@ export default function BillingTab({
                       <td className="p-4 whitespace-nowrap text-right">
                         <div className="inline-flex gap-2">
                           <button 
+                            onClick={() => exportSingleInvoice(invoice)}
+                            className="flex items-center gap-1 p-1 px-2 text-[10px] font-semibold bg-sky-600/20 hover:bg-sky-600 border border-sky-500/30 hover:border-sky-500 text-sky-400 hover:text-white rounded active:scale-95 transition shadow cursor-pointer font-sans"
+                            title="Unduh Invoice PDF"
+                          >
+                            <FileDown className="h-2.5 w-2.5" />
+                            PDF
+                          </button>
+
+                          <button 
                             onClick={() => onUpdateInvoiceStatus(invoice.id, invoice.status === "paid" ? "unpaid" : "paid")}
-                            className="p-1 px-2 text-[10px] font-semibold tracking-wide bg-slate-955 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-900/40 active:scale-95 transition rounded"
+                            className="p-1 px-2 text-[10px] font-semibold tracking-wide bg-slate-955 border border-slate-800 text-slate-300 hover:text-cyan-400 hover:border-cyan-900/40 active:scale-95 transition rounded cursor-pointer font-sans"
                           >
                             {invoice.status === "paid" ? t.markUnpaid : t.markPaid}
                           </button>
@@ -263,7 +367,7 @@ export default function BillingTab({
                           <button 
                             onClick={() => handleSendReminder(invoice.id)}
                             disabled={isLoading}
-                            className="flex items-center gap-1 p-1 px-2 text-[10px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded active:scale-95 transition"
+                            className="flex items-center gap-1 p-1 px-2 text-[10px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded active:scale-95 transition cursor-pointer font-sans"
                             title="Kirim Notifikasi Pengingat WhatsApp"
                           >
                             <Send className="h-2.5 w-2.5" />

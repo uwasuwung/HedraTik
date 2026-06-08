@@ -82,6 +82,47 @@ export interface BandwidthPoint {
   hotspotTx: number;
 }
 
+export interface Ticket {
+  id: string;
+  clientId: string;
+  clientName: string;
+  category: "Internet Mati" | "Koneksi Lambat" | "Perangkat Rusak" | "Lainnya";
+  description: string;
+  status: "open" | "progress" | "resolved" | "closed";
+  createdAt: string;
+  technicianId?: string;
+  technicianName?: string;
+  resolutionNote?: string;
+}
+
+export interface Technician {
+  id: string;
+  name: string;
+  phone: string;
+  status: "idle" | "working" | "standby";
+  avatar: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: "Router" | "ONU" | "OLT" | "Switch" | "Kabel FO" | "Tiang" | "Aksesori";
+  stock: number;
+  minStock: number;
+  unit: string;
+  lastUpdated: string;
+}
+
+export interface FinancialRecord {
+  id: string;
+  date: string;
+  type: "income" | "expense";
+  category: "Subscription" | "Instalasi Baru" | "Penjualan Perangkat" | "Bandwidth ISP" | "Gaji Teknisi" | "Listrik & Listrik" | "Maintenance";
+  amount: number;
+  description: string;
+  branch: string;
+}
+
 export interface DashboardSummary {
   clients: {
     total: number;
