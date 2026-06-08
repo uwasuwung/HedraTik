@@ -13,7 +13,8 @@ import {
   RefreshCw, 
   Activity, 
   Wifi, 
-  Globe 
+  Globe,
+  Radio
 } from "lucide-react";
 
 import { translations } from "./translations";
@@ -36,10 +37,11 @@ import ProfilesTab from "./components/ProfilesTab";
 import BillingTab from "./components/BillingTab";
 import VouchersTab from "./components/VouchersTab";
 import SettingsTab from "./components/SettingsTab";
+import SplynxTab from "./components/SplynxTab";
 
 export default function App() {
   // Global View States
-  const [activeTab, setActiveTab] = useState<"dashboard" | "clients" | "profiles" | "billing" | "vouchers" | "settings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "clients" | "profiles" | "billing" | "vouchers" | "settings" | "splynx">("dashboard");
   const [language, setLanguage] = useState<LanguageType>("id");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -415,6 +417,7 @@ export default function App() {
               { id: "dashboard", label: t.dashboard, icon: LayoutDashboard },
               { id: "clients", label: t.clients, icon: Users },
               { id: "profiles", label: t.profiles, icon: Sliders },
+              { id: "splynx", label: t.splynx, icon: Radio },
               { id: "billing", label: t.billing, icon: CreditCard },
               { id: "vouchers", label: t.vouchers, icon: Ticket },
               { id: "settings", label: t.settings, icon: Settings },
@@ -579,6 +582,15 @@ export default function App() {
                   t={t}
                   onGenerateVouchers={handleGenerateVouchers}
                   onDeleteBatch={handleDeleteBatch}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {activeTab === "splynx" && (
+                <SplynxTab 
+                  clients={clients}
+                  profiles={profiles}
+                  t={t}
                   isLoading={isLoading}
                 />
               )}

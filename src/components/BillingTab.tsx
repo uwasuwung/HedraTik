@@ -16,7 +16,7 @@ import {
   FileDown
 } from "lucide-react";
 import { Invoice, SystemConfig } from "../types";
-import { exportSingleInvoice, exportBulkInvoices } from "../utils/pdfGenerator";
+import { exportSingleInvoice, exportBulkInvoices, exportMonthlyReport } from "../utils/pdfGenerator";
 
 interface BillingTabProps {
   invoices: Invoice[];
@@ -80,6 +80,11 @@ export default function BillingTab({
   const handleExportAllPDF = () => {
     exportBulkInvoices(invoices, selectedMonth);
   };
+
+  const handleExportMonthlyReport = () => {
+    exportMonthlyReport(invoices, selectedMonth);
+  };
+
 
   // Sync state with props
   React.useEffect(() => {
@@ -242,12 +247,22 @@ export default function BillingTab({
             )}
 
             <button
+              onClick={handleExportMonthlyReport}
+              disabled={invoices.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-[10px] font-sans transition disabled:opacity-45 disabled:cursor-not-allowed active:scale-95 cursor-pointer shadow-md shadow-blue-600/10"
+              title="Unduh laporan ringkasan billing bulanan profesional"
+            >
+              <FileDown className="h-3 w-3 text-white" />
+              Ekspor Laporan Bulanan PDF
+            </button>
+
+            <button
               onClick={handleExportAllPDF}
               disabled={invoices.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-255 font-medium text-[10px] font-sans transition disabled:opacity-45 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-200 font-medium text-[10px] font-sans transition disabled:opacity-45 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
             >
               <FileDown className="h-3 w-3 text-cyan-400" />
-              Ekspor Semua PDF ({invoices.length})
+              Ekspor Semua Invoice ({invoices.length})
             </button>
           </div>
         </div>

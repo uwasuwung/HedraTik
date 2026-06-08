@@ -9,6 +9,7 @@ export const translations = {
     router: "Router MikroTik",
     activityLogs: "Log Aktivitas",
     settings: "Pengaturan & 2FA",
+    splynx: "Splynx ISP Console",
     
     // Summary cards
     totalClients: "Total Pelanggan",
@@ -110,6 +111,7 @@ export const translations = {
     router: "MikroTik Router",
     activityLogs: "Activity Logs",
     settings: "Settings & 2FA",
+    splynx: "Splynx ISP Control",
 
     // Summary cards
     totalClients: "Total Clients",

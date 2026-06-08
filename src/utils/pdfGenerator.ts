@@ -252,3 +252,279 @@ export function exportBulkInvoices(invoices: Invoice[], monthMarker = "Selected_
   const filename = `Invoices_Bulk_${cleanMonth}_${timestamp}.pdf`;
   doc.save(filename);
 }
+
+/**
+ * Generates and downloads a professional Monthly Billing Report as a PDF file.
+ */
+export function exportMonthlyReport(invoices: Invoice[], month: string) {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4"
+  });
+
+  const xLeft = 15;
+  const xRight = 195;
+  const width = xRight - xLeft; // 180mm
+
+  // 1. Report Header Banner
+  doc.setFillColor(15, 23, 42); // slate-900: #0f172a
+  doc.rect(0, 0, 210, 42, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("MIKROADMIN NETWORKS", xLeft, 16);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184); // slate-400
+  doc.text("LAPORAN BULANAN BILLING & ARUS TAGIHAN PELANGGAN", xLeft, 22);
+  doc.text("Sistem Pengelolaan Terintegrasi Router MikroTik & Billing Otomatis", xLeft, 26);
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("REKAP BILLING BULANAN", xRight, 16, { align: "right" });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(56, 189, 248); // sky-400
+  doc.text(`Periode: ${month.toUpperCase()}`, xRight, 24, { align: "right" });
+
+  const currentDate = new Date().toLocaleDateString("id-ID", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text(`Diekspor: ${currentDate}`, xRight, 30, { align: "right" });
+
+  // 2. Compute Summary Metrics
+  const totalCount = invoices.length;
+  const paidInvoices = invoices.filter(inv => inv.status === "paid");
+  const unpaidInvoices = invoices.filter(inv => inv.status === "unpaid");
+  const overdueInvoices = invoices.filter(inv => inv.status === "overdue" || (inv.status as string) === "suspend");
+  
+  const totalAmount = invoices.reduce((acc, inv) => acc + inv.amount, 0);
+  const paidAmount = paidInvoices.reduce((acc, inv) => acc + inv.amount, 0);
+  const unpaidAmount = unpaidInvoices.reduce((acc, inv) => acc + inv.amount, 0);
+
+  // 3. Render Metric Cards
+  let y = 52;
+  
+  // Outer rectangle for metrics
+  doc.setDrawColor(226, 232, 240); // slate-200
+  doc.setFillColor(248, 250, 252); // slate-50
+  doc.setLineWidth(0.3);
+  doc.rect(xLeft, y, width, 24, "FD");
+
+  // Divider lines inside metrics box
+  doc.line(xLeft + 60, y, xLeft + 60, y + 24);
+  doc.line(xLeft + 120, y, xLeft + 120, y + 24);
+
+  // Card 1: Total Ringkasan
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139); // slate-500
+  doc.text("IKHTISAR TAGIHAN", xLeft + 5, y + 6);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105); // slate-600
+  doc.text(`Total Invoice: ${totalCount} pcs`, xLeft + 5, y + 12);
+  doc.text(`Total Omset: Rp ${totalAmount.toLocaleString("id-ID")}`, xLeft + 5, y + 18);
+
+  // Card 2: Lunas (Paid)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(16, 185, 129); // emerald-500
+  doc.text("TAGIHAN LUNAS (PAID)", xLeft + 65, y + 6);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Jumlah: ${paidInvoices.length} Pelanggan`, xLeft + 65, y + 12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Dana Masuk: Rp ${paidAmount.toLocaleString("id-ID")}`, xLeft + 65, y + 18);
+
+  // Card 3: Belum Bayar (Unpaid)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(239, 68, 68); // red-500
+  doc.text("BELUM BAYAR / MENUNGGAK", xLeft + 125, y + 6);
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Outstanding: ${unpaidInvoices.length + overdueInvoices.length} Unit`, xLeft + 125, y + 12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Piutang: Rp ${unpaidAmount.toLocaleString("id-ID")}`, xLeft + 125, y + 18);
+
+  // 4. DRAW INVOICES TABLE
+  y += 34;
+
+  // Header Table Background
+  doc.setFillColor(15, 23, 42); // slate-900
+  doc.rect(xLeft, y, width, 8, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  
+  doc.text("NO", xLeft + 2, y + 5.5);
+  doc.text("ID INVOICE", xLeft + 10, y + 5.5);
+  doc.text("NAMA PELANGGAN", xLeft + 34, y + 5.5);
+  doc.text("PAKET", xLeft + 82, y + 5.5);
+  doc.text("JATUH TEMPO", xLeft + 108, y + 5.5);
+  doc.text("STATUS", xLeft + 133, y + 5.5);
+  doc.text("TOTAL BAYAR", xRight - 2, y + 5.5, { align: "right" });
+
+  y += 8; // move to first row
+
+  // Let's populate the table
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(15, 23, 42);
+
+  if (invoices.length === 0) {
+    doc.setDrawColor(226, 232, 240);
+    doc.line(xLeft, y, xRight, y);
+    doc.text("Tidak ada data tagihan untuk periode ini.", 105, y + 8, { align: "center" });
+  } else {
+    invoices.forEach((inv, index) => {
+      // Manage pagination
+      if (y > 265) {
+        // Add footer for the page
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text("Halaman Bersambung...", 105, 285, { align: "center" });
+
+        doc.addPage();
+        y = 20;
+
+        // Draw subheader on next page
+        doc.setFillColor(15, 23, 42); // slate-900
+        doc.rect(xLeft, y, width, 8, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        
+        doc.text("NO", xLeft + 2, y + 5.5);
+        doc.text("ID INVOICE", xLeft + 10, y + 5.5);
+        doc.text("NAMA PELANGGAN", xLeft + 34, y + 5.5);
+        doc.text("PAKET", xLeft + 82, y + 5.5);
+        doc.text("JATUH TEMPO", xLeft + 108, y + 5.5);
+        doc.text("STATUS", xLeft + 133, y + 5.5);
+        doc.text("TOTAL BAYAR", xRight - 2, y + 5.5, { align: "right" });
+
+        y += 8;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(15, 23, 42);
+      }
+
+      // Draw light horizontal grid line
+      doc.setDrawColor(241, 245, 249); // slate-100
+      doc.setLineWidth(0.25);
+      doc.line(xLeft, y, xRight, y);
+
+      // NO
+      doc.text(String(index + 1), xLeft + 2, y + 5.5);
+
+      // ID INVOICE
+      doc.setFont("helvetica", "bold");
+      doc.text(inv.id.slice(0, 8).toUpperCase(), xLeft + 10, y + 5.5);
+      doc.setFont("helvetica", "normal");
+
+      // CLIENT NAME
+      let formattedClientName = inv.clientName;
+      if (formattedClientName.length > 22) {
+        formattedClientName = formattedClientName.slice(0, 20) + "..";
+      }
+      doc.text(formattedClientName, xLeft + 34, y + 5.5);
+
+      // PROFILE
+      doc.text(inv.profileName, xLeft + 82, y + 5.5);
+
+      // DUE DATE
+      doc.text(inv.dueDate, xLeft + 108, y + 5.5);
+
+      // STATUS badge color & text
+      const st = inv.status.toLowerCase();
+      if (st === "paid") {
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFont("helvetica", "bold");
+        doc.text("LUNAS", xLeft + 133, y + 5.5);
+      } else if (st === "unpaid") {
+        doc.setTextColor(217, 119, 6); // amber-600
+        doc.setFont("helvetica", "bold");
+        doc.text("BELUM BAYAR", xLeft + 133, y + 5.5);
+      } else {
+        doc.setTextColor(220, 38, 38); // red-650 / red-600
+        doc.setFont("helvetica", "bold");
+        doc.text("TERLAMBAT", xLeft + 133, y + 5.5);
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(15, 23, 42); // reset color
+
+      // TOTAL BAYAR
+      const amountStr = `Rp ${inv.amount.toLocaleString("id-ID")}`;
+      doc.text(amountStr, xRight - 2, y + 5.5, { align: "right" });
+
+      y += 8; // Row height
+    });
+  }
+
+  // Draw final border line under the table rows
+  doc.setDrawColor(203, 213, 225); // slate-300
+  doc.setLineWidth(0.5);
+  doc.line(xLeft, y, xRight, y);
+
+  // 5. SIGN-OFF & STAMP AREA (Check if there is space left or push to new page)
+  if (y > 225) {
+    doc.addPage();
+    y = 20;
+  }
+
+  y += 12;
+  // Summary Signatures
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text("DIREKTUR KEUANGAN / BENDAHARA MIKROADMIN", xLeft + 10, y);
+  doc.text("DISETUJUI OLEH / BOARD OF OWNER", xRight - 65, y);
+
+  y += 20;
+  // Line for signatures
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.5);
+  doc.line(xLeft + 10, y, xLeft + 65, y);
+  doc.line(xRight - 65, y, xRight - 10, y);
+
+  y += 4;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Penyusun Laba Rugi Billing Digital", xLeft + 10, y);
+  doc.text("Sistem Verifikasi Router Terbaca", xRight - 65, y);
+
+  // Bottom standard branding footers
+  const finalY = 282;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184); // slate-400
+  doc.text("MikroAdmin Networks ISP - Professional Digital Financial Report System", 105, finalY, { align: "center" });
+
+  const cleanMonth = month.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  const reportFilename = `Laporan_Billing_Bulanan_${cleanMonth}.pdf`;
+  doc.save(reportFilename);
+}

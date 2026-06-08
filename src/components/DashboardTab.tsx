@@ -29,6 +29,7 @@ import {
   PieChart
 } from "lucide-react";
 import { DashboardSummary, ActivityLog } from "../types";
+import NetworkTopologyD3 from "./NetworkTopologyD3";
 
 interface DashboardTabProps {
   summary: DashboardSummary | null;
@@ -314,6 +315,9 @@ export default function DashboardTab({
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Network Topology Map using D3 */}
+      <NetworkTopologyD3 />
 
       {/* Analytics Breakdown Grid: Revenue & popular profiles */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
